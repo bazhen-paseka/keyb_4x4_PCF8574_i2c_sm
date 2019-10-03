@@ -7,11 +7,11 @@
 	#include "i2c_techmaker_sm.h"
 
 /***********************************/
-	#define I2C_ADR_PCF8574 0x38
-	//uint8_t devAddr = I2C_ADR_PCF8574;
-	uint8_t keyboard_u8 ;
+
+/***********************************/
 
 	char key[4][4];
+	char DataChar[100];
 
 	typedef struct
 	{
@@ -19,17 +19,13 @@
 		I2C_HandleTypeDef  i2c;
 		uint8_t devAddr;
 	} keyboard_struct;
-	/***********************************/
-
-
-
-	char DataChar[100];
 
 	keyboard_struct KEY;
+/***********************************/
 
-	void init_struct(keyboard_struct *_key,I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart);
-	void init_keyboard(keyboard_struct * _key);
-	void scan_keyboard(keyboard_struct * _key);
+	void Init_keyboard_struct(I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr);
+	void Start_keyboard(void);
+	char Scan_keyboard(void);
 	uint8_t Get_keyboard_int_flag(void);
 	void Update_keyboard_int_flag(uint8_t _flag);
 
