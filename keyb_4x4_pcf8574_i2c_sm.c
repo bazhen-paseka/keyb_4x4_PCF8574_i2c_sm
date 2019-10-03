@@ -1,9 +1,13 @@
+
 #include "keyb_4x4_pcf8574_i2c_sm.h"
 
+/******************************************************/
 
+	uint8_t keyboard_int_flag = 0;
 	uint8_t	row = 0;
 	uint8_t	col = 0;
 	char previous_char = '-';
+	/******************************************************/
 
 void init_struct(keyboard_struct *_key, I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart)
 {
@@ -11,11 +15,12 @@ void init_struct(keyboard_struct *_key, I2C_HandleTypeDef * _i2c, UART_HandleTyp
 	_key->i2c = *_i2c;
 	_key->uart = *_uart;
 }
+/******************************************************/
 
 void init_keyboard(keyboard_struct *_key)
 {
 	char DataChar[100];
-	sprintf(DataChar,"\r\nKeyBord 4x4 over PCF8574 v1.1.0\r\nUART1 for debug started on speed 9600\r\n");
+	sprintf(DataChar,"\r\nKeyBord 4x4 over PCF8574 v2.0.0\r\nUART1 for debug started on speed 9600\r\n");
 	HAL_UART_Transmit(&_key->uart, (uint8_t *)DataChar, strlen(DataChar), 100);
 
 	I2Cdev_init(&_key->i2c);
@@ -42,9 +47,10 @@ void init_keyboard(keyboard_struct *_key)
 
 	key[3][0] = '*';
 	key[3][1] = '0';
-	key[3][2] = '#';
-	key[3][3] = 'D';
+	key[3][2] = '\r';
+	key[3][3] = '\n';
 }
+/******************************************************/
 
 void scan_keyboard(keyboard_struct * _key)
 {
@@ -71,7 +77,8 @@ void scan_keyboard(keyboard_struct * _key)
 
 	if ( previous_char != key[row][col] )
 	{
-		sprintf(DataChar,"[%d][%d] btn %c\r\n",  row, col, key[row][col]);
+		//sprintf(DataChar,"[%d][%d] btn %c\r\n",  row, col, key[row][col]);
+		sprintf(DataChar,"%c", key[row][col]);
 		HAL_UART_Transmit(&_key->uart, (uint8_t *)DataChar, strlen(DataChar), 100);
 		previous_char = key[row][col];
 	}
@@ -79,3 +86,19 @@ void scan_keyboard(keyboard_struct * _key)
 	keyboard_u8 = 0b00001111;
 	HAL_I2C_Master_Transmit(&_key->i2c, _key->devAddr<<1, &keyboard_u8,  1, 100 );
 }
+/******************************************************/
+
+uint8_t Get_keyboard_int_flag(void)
+{
+	return keyboard_int_flag;
+}
+/******************************************************/
+
+void Update_keyboard_int_flag(uint8_t _flag)
+{
+	keyboard_int_flag = _flag;
+}
+/******************************************************/
+/******************************************************/
+/******************************************************/
+/******************************************************/
