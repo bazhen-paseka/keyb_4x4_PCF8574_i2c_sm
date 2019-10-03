@@ -1,29 +1,34 @@
+
 #include "keyb_4x4_pcf8574_i2c_sm.h"
 
+/******************************************************/
 
+	uint8_t keyboard_u8 ;
+	uint8_t keyboard_int_flag = 0;
 	uint8_t	row = 0;
 	uint8_t	col = 0;
 	char previous_char = '-';
+	/******************************************************/
 
-void init_struct(keyboard_struct *_key, I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart)
+void Init_keyboard_struct(I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr)
 {
-	_key->devAddr = I2C_ADR_PCF8574;
-	_key->i2c = *_i2c;
-	_key->uart = *_uart;
+	KEY.devAddr = _addr;
+	KEY.i2c = *_i2c;
+	KEY.uart = *_uart;
 }
+/******************************************************/
 
-void init_keyboard(keyboard_struct *_key)
+void Start_keyboard(void)
 {
-	char DataChar[100];
-	sprintf(DataChar,"\r\nKeyBord 4x4 over PCF8574 v1.1.0\r\nUART1 for debug started on speed 9600\r\n");
-	HAL_UART_Transmit(&_key->uart, (uint8_t *)DataChar, strlen(DataChar), 100);
+	sprintf(DataChar,"\r\nKeyBord 4x4 over PCF8574 v2.1.0\r\nUART1 for debug started on speed 115200\r\n");
+	HAL_UART_Transmit(&KEY.uart, (uint8_t *)DataChar, strlen(DataChar), 100);
 
-	I2Cdev_init(&_key->i2c);
-	I2C_ScanBusFlow(&_key->i2c, &_key->uart);
+	//I2Cdev_init(&KEY.i2c);
+	I2C_ScanBusFlow(&KEY.i2c, &KEY.uart);
 
 
 	keyboard_u8 = 0b00001111;
-	HAL_I2C_Master_Transmit(&_key->i2c, _key->devAddr<<1, &keyboard_u8,  1, 100 );
+	HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
 
 	key[0][0] = '1';
 	key[0][1] = '2';
@@ -42,18 +47,20 @@ void init_keyboard(keyboard_struct *_key)
 
 	key[3][0] = '*';
 	key[3][1] = '0';
-	key[3][2] = '#';
-	key[3][3] = 'D';
+	key[3][2] = '\r';
+	key[3][3] = '\n';
 }
+/******************************************************/
 
-void scan_keyboard(keyboard_struct * _key)
+char Scan_keyboard(void)
 {
+	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 	uint8_t scan=0;
 	for ( uint8_t i = 0; i<8; i++)
 	{
 		keyboard_u8 = (1UL<<i);
-		HAL_I2C_Master_Transmit(&_key->i2c, _key->devAddr<<1, &keyboard_u8,  1, 100 );
-		HAL_I2C_Master_Receive(&_key->i2c, _key->devAddr<<1, &keyboard_u8,  1, 100 );
+		HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
+		HAL_I2C_Master_Receive (&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
 
 		if (keyboard_u8 == 0)
 		{
@@ -71,11 +78,28 @@ void scan_keyboard(keyboard_struct * _key)
 
 	if ( previous_char != key[row][col] )
 	{
-		sprintf(DataChar,"[%d][%d] btn %c\r\n",  row, col, key[row][col]);
-		HAL_UART_Transmit(&_key->uart, (uint8_t *)DataChar, strlen(DataChar), 100);
+		sprintf(DataChar,"%c", key[row][col]);
+		HAL_UART_Transmit(&KEY.uart, (uint8_t *)DataChar, strlen(DataChar), 100);
 		previous_char = key[row][col];
 	}
 
 	keyboard_u8 = 0b00001111;
-	HAL_I2C_Master_Transmit(&_key->i2c, _key->devAddr<<1, &keyboard_u8,  1, 100 );
+	HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
+	return key[row][col];
 }
+/******************************************************/
+
+uint8_t Get_keyboard_int_flag(void)
+{
+	return keyboard_int_flag;
+}
+/******************************************************/
+
+void Update_keyboard_int_flag(uint8_t _flag)
+{
+	keyboard_int_flag = _flag;
+}
+/******************************************************/
+/******************************************************/
+/******************************************************/
+/******************************************************/
