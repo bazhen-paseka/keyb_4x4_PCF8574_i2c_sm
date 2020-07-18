@@ -3,103 +3,104 @@
 
 /******************************************************/
 
-	uint8_t keyboard_u8 ;
-	uint8_t keyboard_int_flag = 0;
-	uint8_t	row = 0;
-	uint8_t	col = 0;
-	char previous_char = '-';
-	/******************************************************/
+			uint8_t keyboard_IRQ_flag 	= 0	;
+	const 	char 	keyboard_char[4][4]	= { { '1', '2', '3', 'A' },
+											{ '4', '5', '6', 'B' },
+											{ '7', '8', '9', 'C' },
+											{ '*', '0', '#', 'D' } } ;
 
-void Init_keyboard_struct(I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr)
-{
-	KEY.devAddr = _addr;
-	KEY.i2c = *_i2c;
-	KEY.uart = *_uart;
+/******************************************************/
+
+	//	for activate IRQ:
+	#define 	IRQ_WORD			(0b00001111)
+	#define		DEBUG_CHARS_SIZE	100
+
+/******************************************************/
+
+	typedef struct {
+		I2C_HandleTypeDef  	i2c		;
+		uint8_t 			devAddr	;
+		UART_HandleTypeDef 	uart	;
+	} PCF8574_keyboard_struct		;
+
+/******************************************************/
+
+	PCF8574_keyboard_struct 	PCF8574_struct ;
+
+/******************************************************/
+/******************************************************/
+
+void PCF8574_struct_init ( I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr ) {
+	PCF8574_struct.i2c 		= *_i2c 	;
+	PCF8574_struct.devAddr	= _addr 	;
+	PCF8574_struct.uart 	= *_uart	;
 }
 /******************************************************/
 
-void Start_keyboard(void)
-{
-	sprintf(DataChar,"\r\nKeyBord 4x4 over PCF8574 v2.1.0\r\nUART1 for debug started on speed 115200\r\n");
-	HAL_UART_Transmit(&KEY.uart, (uint8_t *)DataChar, strlen(DataChar), 100);
+void PCF8574_start_keyboard (void) {
+	char Debug_Char[DEBUG_CHARS_SIZE] = { 0 }	;
+	sprintf(Debug_Char,"\r\nKeyBoard 4x4 over PCF8574 v2.2.0\r\n for debug USART1 on 115200/8-N-1 \r\n") ;
+	HAL_UART_Transmit(&PCF8574_struct.uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
 
-	//I2Cdev_init(&KEY.i2c);
-	I2C_ScanBusFlow(&KEY.i2c, &KEY.uart);
-
-
-	keyboard_u8 = 0b00001111;
-	HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
-
-	key[0][0] = '1';
-	key[0][1] = '2';
-	key[0][2] = '3';
-	key[0][3] = 'A';
-
-	key[1][0] = '4';
-	key[1][1] = '5';
-	key[1][2] = '6';
-	key[1][3] = 'B';
-
-	key[2][0] = '7';
-	key[2][1] = '8';
-	key[2][2] = '9';
-	key[2][3] = 'C';
-
-	key[3][0] = '*';
-	key[3][1] = '0';
-	key[3][2] = '\r';
-	key[3][3] = '\n';
+	I2C_ScanBusFlow(&PCF8574_struct.i2c, &PCF8574_struct.uart) ;
 }
 /******************************************************/
 
-char Scan_keyboard(void)
-{
-	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-	uint8_t scan=0;
-	for ( uint8_t i = 0; i<8; i++)
-	{
-		keyboard_u8 = (1UL<<i);
-		HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
-		HAL_I2C_Master_Receive (&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
+char PCF8574_scan_keyboard (void) {
+	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin) ;
 
-		if (keyboard_u8 == 0)
-		{
-			if ((scan==0) && (i<4))
-			{
-				row = i;
+	static 	uint8_t	keyboard_Row_u8 	= 0	;
+	static 	uint8_t	keyboard_Col_u8		= 0	;
+			uint8_t I2C_RW_register_u8 	= 0 ;
+
+	for ( uint8_t IO_port_u8 = 0; IO_port_u8 < 8; IO_port_u8++) 	{	//	8 Input/Output lines
+		I2C_RW_register_u8 = ( 1UL<<IO_port_u8 ) ;
+		HAL_I2C_Master_Transmit(&PCF8574_struct.i2c, PCF8574_struct.devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
+		HAL_I2C_Master_Receive (&PCF8574_struct.i2c, PCF8574_struct.devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
+
+		if (I2C_RW_register_u8 == 0) {	// якщо "1" скинулась в "0" значить це та лінія, де натиснута кнопка
+			if ( IO_port_u8 <  4 ) {
+				keyboard_Row_u8 = IO_port_u8 ;		//	спочатку знаходимо ряд
 			}
-			if ((scan==1) && (i>=4) && (i<8))
-			{
-				col = i-4;
+			if ( IO_port_u8 >= 4) {
+				keyboard_Col_u8 = IO_port_u8 - 4 ;	//	тепер колонку
 			}
-			scan++;
 		}
 	}
+	return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
+}
+/******************************************************/
 
-	if ( previous_char != key[row][col] )
-	{
-		sprintf(DataChar,"%c", key[row][col]);
-		HAL_UART_Transmit(&KEY.uart, (uint8_t *)DataChar, strlen(DataChar), 100);
-		previous_char = key[row][col];
+void PCF8574_debug_print_key (char _key_char) {
+	static 	char previous_char					= '-'	;
+			char Debug_Char[DEBUG_CHARS_SIZE]	= { 0 }	;
+
+	if ( previous_char == _key_char ) {
+		return;
 	}
 
-	keyboard_u8 = 0b00001111;
-	HAL_I2C_Master_Transmit(&KEY.i2c, KEY.devAddr<<1, &keyboard_u8,  1, 100 );
-	return key[row][col];
+	snprintf(Debug_Char, 4, "%c\r\n", _key_char) ;
+	HAL_UART_Transmit(&PCF8574_struct.uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
+	previous_char = _key_char ;
 }
 /******************************************************/
 
-uint8_t Get_keyboard_int_flag(void)
-{
-	return keyboard_int_flag;
+uint8_t PCF8574_get_IRQ_flag (void) {
+	return keyboard_IRQ_flag ;
 }
 /******************************************************/
 
-void Update_keyboard_int_flag(uint8_t _flag)
-{
-	keyboard_int_flag = _flag;
+void PCF8574_update_IRQ_flag (uint8_t _flag) {
+	if ( _flag == 0 ) {
+		keyboard_IRQ_flag = 0 ;
+	} else {
+		keyboard_IRQ_flag = 1 ;
+	}
 }
 /******************************************************/
-/******************************************************/
-/******************************************************/
+
+void PCF8574_IRQ_enable (void) {
+	uint8_t I2C_RW_register_u8 = IRQ_WORD ;
+	HAL_I2C_Master_Transmit(&PCF8574_struct.i2c, PCF8574_struct.devAddr<<1, &I2C_RW_register_u8,  1, 100 )	;
+}
 /******************************************************/
