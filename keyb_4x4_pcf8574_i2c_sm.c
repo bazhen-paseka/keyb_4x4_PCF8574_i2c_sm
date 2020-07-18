@@ -49,24 +49,22 @@ void PCF8574_start_keyboard (void) {
 char PCF8574_scan_keyboard (void) {
 	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin) ;
 
-	static 	uint8_t	keyboard_Row_u8 	= 0		;
-	static 	uint8_t	keyboard_Col_u8		= 0		;
-			uint8_t I2C_RW_register_u8 	= 0 	;
-			uint8_t magic_var_u8		= 0 	;
+	static 	uint8_t	keyboard_Row_u8 	= 0	;
+	static 	uint8_t	keyboard_Col_u8		= 0	;
+			uint8_t I2C_RW_register_u8 	= 0 ;
 
-	for ( uint8_t IO_port_u8 = 0; IO_port_u8<8; IO_port_u8++) 	{	//	8 Input/Output lines
+	for ( uint8_t IO_port_u8 = 0; IO_port_u8 < 8; IO_port_u8++) 	{	//	8 Input/Output lines
 		I2C_RW_register_u8 = ( 1UL<<IO_port_u8 ) ;
 		HAL_I2C_Master_Transmit(&PCF8574_struct.i2c, PCF8574_struct.devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
 		HAL_I2C_Master_Receive (&PCF8574_struct.i2c, PCF8574_struct.devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
 
 		if (I2C_RW_register_u8 == 0) {	// якщо "1" скинулась в "0" значить це та лінія, де натиснута кнопка
-			if ((magic_var_u8==0) && ( IO_port_u8 <4 )) {
+			if ( IO_port_u8 <  4 ) {
 				keyboard_Row_u8 = IO_port_u8 ;		//	спочатку знаходимо ряд
 			}
-			if ((magic_var_u8==1) && ( IO_port_u8 >= 4) && ( IO_port_u8 < 8 )) {
+			if ( IO_port_u8 >= 4) {
 				keyboard_Col_u8 = IO_port_u8 - 4 ;	//	тепер колонку
 			}
-			magic_var_u8 = 1 ;
 		}
 	}
 	return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
