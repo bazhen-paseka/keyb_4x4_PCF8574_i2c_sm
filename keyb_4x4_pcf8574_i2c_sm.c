@@ -68,7 +68,7 @@ void PCF8574_debug_print_key (PCF8574_Struct * _pcf, char _key_char) {
 		return;
 	}
 
-	snprintf(Debug_Char, 6, "%d)%c\r\n", (int)_pcf->channel, _key_char) ;
+	snprintf(Debug_Char, 5, "%c%d\r\n", _key_char, (int)_pcf->channel) ;
 	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
 	previous_char[_pcf->channel] = _key_char ;
 }
