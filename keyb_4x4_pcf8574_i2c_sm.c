@@ -35,7 +35,7 @@ void PCF8574_start_keyboard (PCF8574_Struct * _pcf) {
 }
 /******************************************************/
 
-char PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
+uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin) ;
 
 	static 	uint8_t	keyboard_Row_u8 	= 0	;
@@ -56,21 +56,23 @@ char PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 			}
 		}
 	}
-	return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
+	uint8_t button_u8 = 10*keyboard_Row_u8 + keyboard_Col_u8 ;
+	//return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
+	return button_u8;
 }
 /******************************************************/
 
-void PCF8574_debug_print_key (PCF8574_Struct * _pcf, char _key_char) {
-	static 	char previous_char[2]					= {'-', '-'}	;
+void PCF8574_debug_print_key (PCF8574_Struct * _pcf, uint8_t _button) {
+	static 	uint8_t previous_button[2]					= { 5, 5 }	;
 			char Debug_Char[DEBUG_CHARS_SIZE]	= { 0 }	;
 
-	if ( previous_char[_pcf->channel] == _key_char ) {
+	if ( previous_button[_pcf->channel] == _button ) {
 		return;
 	}
 
-	snprintf(Debug_Char, 5, "%c%d\r\n", _key_char, (int)_pcf->channel) ;
+	snprintf(Debug_Char, 6, "%02d%d\r\n", _button, (int)_pcf->channel) ;
 	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
-	previous_char[_pcf->channel] = _key_char ;
+	previous_button[_pcf->channel] = _button ;
 }
 /******************************************************/
 

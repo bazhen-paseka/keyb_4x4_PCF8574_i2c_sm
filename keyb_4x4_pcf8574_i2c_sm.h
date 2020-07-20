@@ -27,8 +27,8 @@
 										uint8_t 			_addr)	;
 
 	void PCF8574_start_keyboard 	(PCF8574_Struct * _pcf)					;
-	char PCF8574_scan_keyboard 		(PCF8574_Struct * _pcf)					;
-	void PCF8574_debug_print_key 	(PCF8574_Struct * _pcf, char _key_char)	;
+	uint8_t PCF8574_scan_keyboard 	(PCF8574_Struct * _pcf)					;
+	void PCF8574_debug_print_key 	(PCF8574_Struct * _pcf, uint8_t _button);
 	void PCF8574_IRQ_enable 		(PCF8574_Struct * _pcf)					;
 	void PCF8574_update_IRQ_flag	(PCF8574_Struct * _pcf, uint8_t _flag)	;
 	uint8_t PCF8574_get_IRQ_flag	(PCF8574_Struct * _pcf)					;
