@@ -6,8 +6,12 @@
 	#include <string.h>
 	#include <stdio.h>
 	#include "main.h"
+	#include "usart.h"
+
 	#include "i2c_techmaker_sm.h"
+	#include "keyb_4x4_pcf8574_i2c_sm.h"
 	#include "pcf8574_local_config.h"
+	#include "VR-box-keyboards-local-config.h"
 
 /******************************************************/
 

@@ -28,7 +28,25 @@ void PCF8574_struct_init (PCF8574_Struct * _pcf, uint8_t _channel,  I2C_HandleTy
 
 void PCF8574_start_keyboard (PCF8574_Struct * _pcf) {
 	char Debug_Char[DEBUG_CHARS_SIZE] = { 0 }	;
-	sprintf(Debug_Char,"\r\nKeyBoard 4x4 over PCF8574 v2.3.0\r\n for debug USART1 on 115200/8-N-1 \r\n") ;
+
+	int soft_version_arr_int[3];
+	soft_version_arr_int[0] = ((SOFT_VERSION) / 100) %10 ;
+	soft_version_arr_int[1] = ((SOFT_VERSION) /  10) %10 ;
+	soft_version_arr_int[2] = ((SOFT_VERSION)      ) %10 ;
+
+	int16_t version_year_i16	= VERSION_YEAR	;
+	int16_t version_month_i16 	= VERSION_MONTH	;
+	int16_t version_day_i16		= VERSION_DAY	;
+
+	sprintf(Debug_Char,"\r\n\r\n\tVR-box keyboards over PCF8574 v%d.%d.%d %02d/%02d/%d\r\n\tFor debug: UART1-115200/8-N-1" ,
+			soft_version_arr_int[0] , soft_version_arr_int[1] , soft_version_arr_int[2] ,
+			version_day_i16 , version_month_i16 , version_year_i16 ) ;
+	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
+
+	#define DATE_as_int_str 	(__DATE__)
+	#define TIME_as_int_str 	(__TIME__)
+
+	sprintf(Debug_Char,"\r\n Date:%s; Time: %s;" ,DATE_as_int_str, TIME_as_int_str ) ;
 	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
 
 	I2C_ScanBusFlow(&_pcf->i2c, &_pcf->uart) ;
