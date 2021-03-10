@@ -14,7 +14,7 @@
 	typedef struct {
 		uint8_t				channel ;
 		I2C_HandleTypeDef  	i2c		;
-		uint8_t 			devAddr	;
+		uint8_t 			devAddr_u8	;
 		UART_HandleTypeDef 	uart	;
 	} PCF8574_Struct		;
 
