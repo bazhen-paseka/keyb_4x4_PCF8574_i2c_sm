@@ -6,15 +6,19 @@
 	#include <string.h>
 	#include <stdio.h>
 	#include "main.h"
+	#include "usart.h"
+
 	#include "i2c_techmaker_sm.h"
+	#include "keyb_4x4_pcf8574_i2c_sm.h"
 	#include "pcf8574_local_config.h"
+	#include "VR-box-keyboards-local-config.h"
 
 /******************************************************/
 
 	typedef struct {
 		uint8_t				channel ;
 		I2C_HandleTypeDef  	i2c		;
-		uint8_t 			devAddr	;
+		uint8_t 			devAddr_u8	;
 		UART_HandleTypeDef 	uart	;
 	} PCF8574_Struct		;
 

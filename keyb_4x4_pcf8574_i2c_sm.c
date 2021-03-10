@@ -21,14 +21,32 @@
 void PCF8574_struct_init (PCF8574_Struct * _pcf, uint8_t _channel,  I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr ) {
 	_pcf->channel	=	_channel;
 	_pcf->i2c 		=	*_i2c 	;
-	_pcf->devAddr	=	_addr 	;
+	_pcf->devAddr_u8	=	_addr 	;
 	_pcf->uart 		=	*_uart	;
 }
 /******************************************************/
 
 void PCF8574_start_keyboard (PCF8574_Struct * _pcf) {
 	char Debug_Char[DEBUG_CHARS_SIZE] = { 0 }	;
-	sprintf(Debug_Char,"\r\nKeyBoard 4x4 over PCF8574 v2.3.0\r\n for debug USART1 on 115200/8-N-1 \r\n") ;
+
+	int soft_version_arr_int[3];
+	soft_version_arr_int[0] = ((SOFT_VERSION) / 100) %10 ;
+	soft_version_arr_int[1] = ((SOFT_VERSION) /  10) %10 ;
+	soft_version_arr_int[2] = ((SOFT_VERSION)      ) %10 ;
+
+	int16_t version_year_i16	= VERSION_YEAR	;
+	int16_t version_month_i16 	= VERSION_MONTH	;
+	int16_t version_day_i16		= VERSION_DAY	;
+
+	sprintf(Debug_Char,"\r\n\r\n\tVR-box keyboards over PCF8574 v%d.%d.%d %02d/%02d/%d\r\n\tFor debug: UART1-115200/8-N-1" ,
+			soft_version_arr_int[0] , soft_version_arr_int[1] , soft_version_arr_int[2] ,
+			version_day_i16 , version_month_i16 , version_year_i16 ) ;
+	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
+
+	#define DATE_as_int_str 	(__DATE__)
+	#define TIME_as_int_str 	(__TIME__)
+
+	sprintf(Debug_Char,"\r\n Date:%s; Time: %s;" ,DATE_as_int_str, TIME_as_int_str ) ;
 	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
 
 	I2C_ScanBusFlow(&_pcf->i2c, &_pcf->uart) ;
@@ -44,8 +62,8 @@ uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 
 	for ( uint8_t IO_port_u8 = 0; IO_port_u8 < 8; IO_port_u8++) 	{	//	8 Input/Output lines
 		I2C_RW_register_u8 = ( 1UL<<IO_port_u8 ) ;
-		HAL_I2C_Master_Transmit(&_pcf->i2c, _pcf->devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
-		HAL_I2C_Master_Receive (&_pcf->i2c, _pcf->devAddr<<1, &I2C_RW_register_u8,  1, 100 ) ;
+		HAL_I2C_Master_Transmit( &_pcf->i2c , (_pcf->devAddr_u8)<<1 , &I2C_RW_register_u8 ,  1 , 100 ) ;
+		HAL_I2C_Master_Receive ( &_pcf->i2c , (_pcf->devAddr_u8)<<1 , &I2C_RW_register_u8 ,  1 , 100 ) ;
 
 		if (I2C_RW_register_u8 == 0) {	// якщо "1" скинулась в "0" значить це та лінія, де натиснута кнопка
 			if ( IO_port_u8 <  4 ) {
@@ -56,7 +74,7 @@ uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 			}
 		}
 	}
-	uint8_t button_u8 = 10*keyboard_Row_u8 + keyboard_Col_u8 ;
+	uint8_t button_u8 = 10 * keyboard_Row_u8 + keyboard_Col_u8 ;
 	//return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
 	return button_u8;
 }
@@ -77,22 +95,22 @@ void PCF8574_debug_print_key (PCF8574_Struct * _pcf, uint8_t _button) {
 /******************************************************/
 
 uint8_t PCF8574_get_IRQ_flag (PCF8574_Struct * _pcf) {
-	return keyboard_IRQ_flag[_pcf->channel] ;
+	return keyboard_IRQ_flag[ _pcf->channel ] ;
 }
 /******************************************************/
 
 void PCF8574_update_IRQ_flag (PCF8574_Struct * _pcf , uint8_t _flag) {
 	if ( _flag == 0 ) {
-		keyboard_IRQ_flag[_pcf->channel] = 0 ;
+		keyboard_IRQ_flag[ _pcf->channel ] = 0 ;
 	} else {
-		keyboard_IRQ_flag[_pcf->channel] = 1 ;
+		keyboard_IRQ_flag[ _pcf->channel ] = 1 ;
 	}
 }
 /******************************************************/
 
 void PCF8574_IRQ_enable (PCF8574_Struct * _pcf) {
 	uint8_t I2C_RW_register_u8 = IRQ_WORD ;
-	HAL_I2C_Master_Transmit(&_pcf->i2c, _pcf->devAddr<<1, &I2C_RW_register_u8,  1, 100 )	;
+	HAL_I2C_Master_Transmit( &_pcf->i2c , (_pcf->devAddr_u8)<<1 , &I2C_RW_register_u8 ,  1 , 100 )	;
 }
 /******************************************************/
 
