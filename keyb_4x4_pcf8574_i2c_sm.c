@@ -4,10 +4,10 @@
 /******************************************************/
 
 			uint8_t keyboard_IRQ_flag[2] 	= { 0 }	;
-	const 	char 	keyboard_char[4][4]	= { { '1', '2', '3', 'a' },
-											{ '4', '5', '6', 'b' },
-											{ '7', '8', '9', 'c' },
-											{ 'e', '0', 'f', 'd' } } ;
+	const 	char 	keyboard_char[4][4]		= { { '1', '2', '3', 'a' } ,
+												{ '4', '5', '6', 'b' } ,
+												{ '7', '8', '9', 'c' } ,
+												{ 'e', '0', 'f', 'd' } } ;
 
 /******************************************************/
 
@@ -18,43 +18,24 @@
 /******************************************************/
 /******************************************************/
 
-void PCF8574_struct_init (PCF8574_Struct * _pcf, uint8_t _channel,  I2C_HandleTypeDef * _i2c, UART_HandleTypeDef * _uart, uint8_t _addr ) {
-	_pcf->channel	=	_channel;
-	_pcf->i2c 		=	*_i2c 	;
+void PCF8574_struct_init(	PCF8574_Struct		*_pcf		,
+							uint8_t				_channel	,
+							I2C_HandleTypeDef	*_i2c		,
+							UART_HandleTypeDef	*_uart		,
+							uint8_t				_addr		) {
+	_pcf->channel		=	_channel;
+	_pcf->i2c 			=	*_i2c 	;
 	_pcf->devAddr_u8	=	_addr 	;
-	_pcf->uart 		=	*_uart	;
+	_pcf->uart 			=	*_uart	;
 }
 /******************************************************/
 
 void PCF8574_start_keyboard (PCF8574_Struct * _pcf) {
-	char Debug_Char[DEBUG_CHARS_SIZE] = { 0 }	;
 
-	int soft_version_arr_int[3];
-	soft_version_arr_int[0] = ((SOFT_VERSION) / 100) %10 ;
-	soft_version_arr_int[1] = ((SOFT_VERSION) /  10) %10 ;
-	soft_version_arr_int[2] = ((SOFT_VERSION)      ) %10 ;
-
-	int16_t version_year_i16	= VERSION_YEAR	;
-	int16_t version_month_i16 	= VERSION_MONTH	;
-	int16_t version_day_i16		= VERSION_DAY	;
-
-	sprintf(Debug_Char,"\r\n\r\n\tVR-box keyboards over PCF8574 v%d.%d.%d %02d/%02d/%d\r\n\tFor debug: UART1-115200/8-N-1" ,
-			soft_version_arr_int[0] , soft_version_arr_int[1] , soft_version_arr_int[2] ,
-			version_day_i16 , version_month_i16 , version_year_i16 ) ;
-	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
-
-	#define DATE_as_int_str 	(__DATE__)
-	#define TIME_as_int_str 	(__TIME__)
-
-	sprintf(Debug_Char,"\r\n Date:%s; Time: %s;" ,DATE_as_int_str, TIME_as_int_str ) ;
-	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
-
-	I2C_ScanBusFlow(&_pcf->i2c, &_pcf->uart) ;
 }
 /******************************************************/
 
 uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
-	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin) ;
 
 	static 	uint8_t	keyboard_Row_u8 	= 0	;
 	static 	uint8_t	keyboard_Col_u8		= 0	;
@@ -80,17 +61,12 @@ uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 }
 /******************************************************/
 
-void PCF8574_debug_print_key (PCF8574_Struct * _pcf, uint8_t _button) {
-	static 	uint8_t previous_button[2]					= { 5, 5 }	;
-			char Debug_Char[DEBUG_CHARS_SIZE]	= { 0 }	;
-
-	if ( previous_button[_pcf->channel] == _button ) {
-		return;
-	}
-
-	snprintf(Debug_Char, 6, "%02d%d\r\n", _button, (int)_pcf->channel) ;
-	HAL_UART_Transmit(&_pcf->uart, (uint8_t *)Debug_Char, strlen(Debug_Char), 100) ;
-	previous_button[_pcf->channel] = _button ;
+void PCF8574_print_key(	PCF8574_Struct	*_pcf		,
+						uint8_t 		_button_u8	) {
+	#define DEBUG_CHAR_SIZE		6
+	char 	Debug_Char[DEBUG_CHARS_SIZE]	= { 0 }	;
+	snprintf(Debug_Char, DEBUG_CHAR_SIZE, "%d%02d\r\n", (int)_pcf->channel , _button_u8 ) ;
+	HAL_UART_Transmit( &_pcf->uart , (uint8_t *)Debug_Char , strlen(Debug_Char) , 100 ) ;
 }
 /******************************************************/
 
