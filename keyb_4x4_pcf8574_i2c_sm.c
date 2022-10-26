@@ -20,9 +20,7 @@
 
 void PCF8574_struct_init(	PCF8574_Struct		*_pcf		,
 							I2C_HandleTypeDef	*_i2c		,
-							uint8_t				_channel	,
 							uint8_t				_addr		) {
-	_pcf->channel		=	_channel;
 	_pcf->i2c 			=	*_i2c 	;
 	_pcf->devAddr_u8	=	_addr 	;
 }
