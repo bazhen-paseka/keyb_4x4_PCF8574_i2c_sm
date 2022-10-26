@@ -46,8 +46,9 @@ uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 			}
 		}
 	}
-	uint8_t button_u8 = 10 * keyboard_Row_u8 + keyboard_Col_u8 ;
+	//uint8_t button_u8 = 10 * keyboard_Row_u8 + keyboard_Col_u8 ;
 	//return keyboard_char[keyboard_Row_u8][keyboard_Col_u8] ;
+	uint8_t button_u8 = 4 * keyboard_Row_u8 + keyboard_Col_u8 + 1;
 	return button_u8;
 }
 /******************************************************/
