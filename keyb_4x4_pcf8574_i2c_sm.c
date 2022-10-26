@@ -3,7 +3,7 @@
 
 /******************************************************/
 
-			uint8_t keyboard_IRQ_flag[2] 	= { 0 }	;
+			uint8_t keyboard_IRQ_flag 	=  0 ;
 	const 	char 	keyboard_char[4][4]		= { { '1', '2', '3', 'a' } ,
 												{ '4', '5', '6', 'b' } ,
 												{ '7', '8', '9', 'c' } ,
@@ -20,9 +20,7 @@
 
 void PCF8574_struct_init(	PCF8574_Struct		*_pcf		,
 							I2C_HandleTypeDef	*_i2c		,
-							uint8_t				_channel	,
 							uint8_t				_addr		) {
-	_pcf->channel		=	_channel;
 	_pcf->i2c 			=	*_i2c 	;
 	_pcf->devAddr_u8	=	_addr 	;
 }
@@ -54,16 +52,16 @@ uint8_t PCF8574_scan_keyboard (PCF8574_Struct * _pcf) {
 }
 /******************************************************/
 
-uint8_t PCF8574_get_IRQ_flag (PCF8574_Struct * _pcf) {
-	return keyboard_IRQ_flag[ _pcf->channel ] ;
+uint8_t PCF8574_get_IRQ_flag (void) {
+	return keyboard_IRQ_flag ;
 }
 /******************************************************/
 
-void PCF8574_update_IRQ_flag (PCF8574_Struct * _pcf , uint8_t _flag) {
+void PCF8574_update_IRQ_flag (uint8_t _flag) {
 	if ( _flag == 0 ) {
-		keyboard_IRQ_flag[ _pcf->channel ] = 0 ;
+		keyboard_IRQ_flag = 0 ;
 	} else {
-		keyboard_IRQ_flag[ _pcf->channel ] = 1 ;
+		keyboard_IRQ_flag = 1 ;
 	}
 }
 /******************************************************/
@@ -74,7 +72,7 @@ void PCF8574_IRQ_enable (PCF8574_Struct * _pcf) {
 }
 /******************************************************/
 
-void PCF8574_set_IRQ_flag (uint8_t _channel) {
-	keyboard_IRQ_flag[_channel] = 1 ;
+void PCF8574_set_IRQ_flag (void) {
+	keyboard_IRQ_flag = 1 ;
 }
 /******************************************************/
